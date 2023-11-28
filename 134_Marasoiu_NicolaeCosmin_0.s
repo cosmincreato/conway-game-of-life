@@ -19,6 +19,7 @@
     indexColoana: .space 4
     matrice: .space 1600
 
+    indexK: .space 4
     nrVecini: .space 4
 
 .text
@@ -60,7 +61,7 @@ main:           # citim nr linii, col si celule vii
 et_citire_celule:   # citim cele p celule vii
     movl indexP, %ecx
     cmp %ecx, p
-    je et_evolutie
+    je et_citire_k
 
     pushl $pozX
     pushl $formatScanf
@@ -89,28 +90,41 @@ et_citire_celule:   # citim cele p celule vii
     incl indexP
     jmp et_citire_celule
 
-# vecinii elementelor:
-# 1) poz - n - 1
-# 2) poz - n
-# 3) poz - n + 1
-# 4) poz - 1
-# 5) poz + 1
-# 6) poz + n - 1
-# 7) poz + n
-# 8) poz + n + 1
+et_citire_k:                # citim numarul de evolutii
+    pushl $k
+    pushl $formatScanf
+    call scanf
+    popl %edx
+    popl %edx
 
-et_evolutie:
-    movl $1, indexLinie
+    movl $0, indexK
+
+et_evolutie:                # un loop in care executam cele k evolutii
+    movl indexK, %ecx
+
+    cmp %ecx, k
+    je et_afisare_mat
+
+    incl indexK
+        
+    movl $1, indexLinie     # resetam indexul matricei pentru a o reparcurge     
+        
+    movl $4, %eax           # newline
+    movl $1, %ebx
+    movl $newLine, %ecx
+    movl $2, %edx
+    int $0x80
+
     et_linie_evo:
         movl indexLinie, %ecx
         cmp %ecx, mVerif
-        je et_afisare_mat
+        je et_evolutie
 
         movl $1, indexColoana
         et_coloana_evo:
             movl indexColoana, %ecx
             cmp %ecx, nVerif
-            je et_next_evo
+            je et_linia_urmatoare_evo
 
             movl indexLinie, %eax
             movl $0, %edx
@@ -133,7 +147,7 @@ et_evolutie:
             decl %eax
             movl (%edi, %eax, 4), %edx
 
-            addl %edx, nrVecini     # daca in edx avem o celula vie, nrVecini va creste
+            addl %edx, nrVecini # daca in edx avem o celula vie, nrVecini va creste
 
 
             # Vecinul 2) (indexLinie -1, indexColoana)
@@ -220,13 +234,16 @@ et_evolutie:
             call fflush
             popl %edx
 
+            # Jump in functie de valoarea lui ebx
 
+            
 
-            incl indexColoana
-            jmp et_coloana_evo
+            et_coloana_urmatoare_evo:
+                incl indexColoana
+                jmp et_coloana_evo
 
-    et_next_evo:
-        
+    et_linia_urmatoare_evo:
+            
         movl $4, %eax
         movl $1, %ebx
         movl $newLine, %ecx
