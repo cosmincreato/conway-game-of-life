@@ -60,7 +60,7 @@ main:           # citim nr linii, col si celule vii
 et_citire_celule:   # citim cele p celule vii
     movl indexP, %ecx
     cmp %ecx, p
-    je et_afisare_mat
+    je et_evolutie
 
     pushl $pozX
     pushl $formatScanf
@@ -103,13 +103,13 @@ et_evolutie:
     movl $1, indexLinie
     et_linie_evo:
         movl indexLinie, %ecx
-        cmp %ecx, m
+        cmp %ecx, mVerif
         je et_afisare_mat
 
         movl $1, indexColoana
         et_coloana_evo:
             movl indexColoana, %ecx
-            cmp %ecx, n
+            cmp %ecx, nVerif
             je et_next_evo
 
             movl indexLinie, %eax
@@ -120,9 +120,11 @@ et_evolutie:
             lea matrice, %edi
             movl (%edi, %eax, 4), %ebx
 
-            # in ebx avem elementul POZ
+            # in ebx avem celula de pe pozitia curenta
+            # in edx vom incepe sa retinem cei 8 vecini ai elementului din ebx
+            movl $0, nrVecini   # numarul de vecini ai celulei curente
 
-            # Vecinul 1) poz - n - 1
+            # Vecinul 1) (indexLinie-1, indexColoana-1)
             movl indexLinie, %eax
             movl $0, %edx
             decl %eax
@@ -131,8 +133,92 @@ et_evolutie:
             decl %eax
             movl (%edi, %eax, 4), %edx
 
+            addl %edx, nrVecini     # daca in edx avem o celula vie, nrVecini va creste
 
 
+            # Vecinul 2) (indexLinie -1, indexColoana)
+            movl indexLinie, %eax
+            movl $0, %edx
+            decl %eax
+            mull n
+            addl indexColoana, %eax
+            movl (%edi, %eax, 4), %edx
+
+            addl %edx, nrVecini
+
+            # Vecinul 3) (indexLinie -1, indexColoana + 1)
+            movl indexLinie, %eax
+            movl $0, %edx
+            decl %eax
+            mull n
+            addl indexColoana, %eax
+            incl %eax
+            movl (%edi, %eax, 4), %edx
+
+            addl %edx, nrVecini
+
+            # Vecinul 4) (indexLinie, indexColoana + 1)
+            movl indexLinie, %eax
+            movl $0, %edx
+            mull n
+            addl indexColoana, %eax
+            incl %eax
+            movl (%edi, %eax, 4), %edx
+
+            addl %edx, nrVecini
+
+            # Vecinul 5) (indexLinie + 1, indexColoana + 1)
+            movl indexLinie, %eax
+            movl $0, %edx
+            incl %eax
+            mull n
+            addl indexColoana, %eax
+            incl %eax
+            movl (%edi, %eax, 4), %edx
+
+            addl %edx, nrVecini
+
+            # Vecinul 6) (indexLinie + 1, indexColoana)
+            movl indexLinie, %eax
+            movl $0, %edx
+            incl %eax
+            mull n
+            addl indexColoana, %eax
+            movl (%edi, %eax, 4), %edx
+
+            addl %edx, nrVecini
+
+            # Vecinul 7) (indexLinie + 1, indexColoana - 1)
+            movl indexLinie, %eax
+            movl $0, %edx
+            incl %eax
+            mull n
+            addl indexColoana, %eax
+            decl %eax
+            movl (%edi, %eax, 4), %edx
+
+            addl %edx, nrVecini
+
+            # Vecinul 8) (indexLinie, indexColoana - 1)
+            movl indexLinie, %eax
+            movl $0, %edx
+            mull n
+            addl indexColoana, %eax
+            decl %eax
+            movl (%edi, %eax, 4), %edx
+
+            addl %edx, nrVecini
+
+            # Afisarea numarului de vecini ai fiecarei celule
+            pushl nrVecini
+            pushl $formatPrintf
+            call printf
+            popl %edx
+            popl %edx
+
+            pushl $0
+            call fflush
+            popl %edx
 
 
 
@@ -150,8 +236,14 @@ et_evolutie:
         incl indexLinie
         jmp et_linie_evo
 
-
 et_afisare_mat:
+
+    movl $4, %eax
+    movl $1, %ebx
+    movl $newLine, %ecx
+    movl $2, %edx
+    int $0x80
+
     movl $1, indexLinie
 
     et_linie:
