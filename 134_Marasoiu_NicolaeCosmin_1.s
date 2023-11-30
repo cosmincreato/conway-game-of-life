@@ -2,11 +2,13 @@
     formatScanf: .asciz "%d"
     formatPrintf: .asciz "%d"
     newLine: .asciz "\n"
+    sir: .space 
 
     m: .space 4
     n: .space 4
     p: .space 4
     k: .space 4
+    task: .space 4
 
     mVerif: .space 4
     nVerif: .space 4
