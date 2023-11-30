@@ -1,6 +1,6 @@
 .data
     formatScanf: .asciz "%d"
-    formatPrintf: .asciz "%d "
+    formatPrintf: .asciz "%d"
     newLine: .asciz "\n"
 
     m: .space 4
@@ -107,7 +107,7 @@ et_citire_k:                # citim numarul de evolutii
 et_evolutie:                # un loop in care executam cele k evolutii
     movl indexK, %ecx
     cmp %ecx, k
-    je et_afisare_mat       # cand toate cele k evolutii au avut loc, afisam matricea finala
+    je et_afisare_cod       # cand toate cele k evolutii au avut loc, afisam matricea finala
 
     incl indexK
         
@@ -332,19 +332,19 @@ et_interschimbare_matrice:
 
     jmp et_evolutie
 
-et_afisare_mat:
+et_afisare_cod:
 
-    movl $1, indexLinie
+    movl $0, indexLinie
 
     et_linie:
         movl indexLinie, %ecx
-        cmp %ecx, mVerif
+        cmp %ecx, m
         je et_exit
 
-        movl $1, indexColoana
+        movl $0, indexColoana
         et_coloana:
             movl indexColoana, %ecx
-            cmp %ecx, nVerif
+            cmp %ecx, n
             je et_next
 
             movl indexLinie, %eax
@@ -370,13 +370,6 @@ et_afisare_mat:
             jmp et_coloana
 
     et_next:
-        
-        movl $4, %eax
-        movl $1, %ebx
-        movl $newLine, %ecx
-        movl $2, %edx
-        int $0x80
-
         incl indexLinie
         jmp et_linie
 
