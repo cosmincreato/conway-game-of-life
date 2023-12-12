@@ -352,28 +352,12 @@ et_interschimbare_matrice:
 
 et_afisare_cod:
 
-    push task
-    pushl $formatPrintf
-    call printf
-    popl %edx
-    popl %edx
-
-    pushl $0
-    call fflush
-    popl %edx
-
-    movl $4, %eax
-    movl $1, %ebx
-    movl $newLine, %ecx
-    movl $2, %edx
-    int $0x80
-
     movl $0, indexLinie
 
     et_linie:
         movl indexLinie, %ecx
         cmp %ecx, m
-        je et_exit
+        je et_test
 
         movl $0, indexColoana
         et_coloana:
@@ -407,7 +391,27 @@ et_afisare_cod:
         incl indexLinie
         jmp et_linie
 
+et_test:
+
+    pushl $mesaj
+    pushl $formatStringPrintf
+    call printf
+    popl %edx
+    popl %edx
+
+    pushl $0
+    call fflush
+    popl %edx
+
+    jmp et_exit
+
 et_exit:
+    movl $4, %eax
+    movl $1, %ebx
+    movl $newLine, %ecx
+    movl $2, %edx
+    int $0x80
+
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80

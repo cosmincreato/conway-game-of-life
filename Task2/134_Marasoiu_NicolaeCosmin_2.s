@@ -1,7 +1,10 @@
 .data
     formatScanf: .asciz "%d"
-    formatPrintf: .asciz "%d "
+    formatFprintf: .asciz "%d "
     newLine: .asciz "\n"
+    fileFormat: .asciz "w"
+    fileName: .asciz "out.txt"
+    file: .space 100
 
     m: .space 4
     n: .space 4
@@ -355,16 +358,27 @@ et_afisare_mat:
             lea matrice, %edi
             movl (%edi, %eax, 4), %ebx
 
-            pushl %ebx
-            pushl $formatPrintf
-            call printf
+            pushl $fileFormat
+            pushl $fileName
+            call fopen
             popl %edx
             popl %edx
 
-            pushl $0
+            pushl %ebx
+            pushl $formatFprintf
+            pushl %eax
+            call fprintf
+            popl %edx
+            popl %edx
+            popl %edx
+
+            pushl %eax
             call fflush
             popl %edx
 
+            pushl %eax
+            call fclose
+            popl %edx
 
             incl indexColoana
             jmp et_coloana
