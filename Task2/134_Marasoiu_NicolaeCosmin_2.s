@@ -4,7 +4,7 @@
     newLine: .asciz "\n"
     fileFormat: .asciz "w"
     fileName: .asciz "out.txt"
-    file: .space 100
+    filePointer: .space 4
 
     m: .space 4
     n: .space 4
@@ -339,6 +339,13 @@ et_afisare_mat:
 
     movl $1, indexLinie
 
+    pushl $fileFormat
+    pushl $fileName
+    call fopen
+    movl %eax, filePointer
+    popl %edx
+    popl %edx
+
     et_linie:
         movl indexLinie, %ecx
         cmp %ecx, mVerif
@@ -358,43 +365,34 @@ et_afisare_mat:
             lea matrice, %edi
             movl (%edi, %eax, 4), %ebx
 
-            pushl $fileFormat
-            pushl $fileName
-            call fopen
-            popl %edx
-            popl %edx
-
             pushl %ebx
             pushl $formatFprintf
-            pushl %eax
+            pushl filePointer
             call fprintf
             popl %edx
             popl %edx
-            popl %edx
-
-            pushl %eax
-            call fflush
-            popl %edx
-
-            pushl %eax
-            call fclose
             popl %edx
 
             incl indexColoana
             jmp et_coloana
 
     et_next:
-        
-        movl $4, %eax
-        movl $1, %ebx
-        movl $newLine, %ecx
-        movl $2, %edx
-        int $0x80
+
+        pushl $newLine
+        pushl filePointer
+        call fprintf
+        popl %edx
+        popl %edx  
 
         incl indexLinie
         jmp et_linie
 
 et_exit:
+
+    pushl filePointer
+    call fclose
+    popl %edx
+
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80
