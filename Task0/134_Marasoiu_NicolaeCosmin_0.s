@@ -1,5 +1,6 @@
 .data
-    formatScanf: .asciz "%d"
+    formatNrScanf: .asciz "%d"
+    formatPairScanf: .asciz "%d %d"
     formatPrintf: .asciz "%d "
     newLine: .asciz "\n"
 
@@ -33,21 +34,21 @@
 main:           # citim nr linii, col si celule vii
 
     pushl $m
-    pushl $formatScanf
+    pushl $formatNrScanf
     call scanf
     popl %edx
     popl %edx
     addl $2, m  # pentru bordarea matricei, liniile 0 si m vor fi bordate si nefolosite
 
     pushl $n
-    pushl $formatScanf
+    pushl $formatNrScanf
     call scanf
     popl %edx
     popl %edx
     addl $2, n  # pentru bordarea matricei, coloanele 0 si n vor fi bordate si nefolosite
 
     pushl $p
-    pushl $formatScanf
+    pushl $formatNrScanf
     call scanf
     popl %edx
     popl %edx
@@ -68,15 +69,11 @@ et_citire_celule:   # citim cele p celule vii
     cmp %ecx, p
     je et_citire_k
 
-    pushl $pozX
-    pushl $formatScanf
-    call scanf
-    popl %edx
-    popl %edx
-
     pushl $pozY
-    pushl $formatScanf
+    pushl $pozX
+    pushl $formatPairScanf
     call scanf
+    popl %edx
     popl %edx
     popl %edx
 
@@ -97,7 +94,7 @@ et_citire_celule:   # citim cele p celule vii
 
 et_citire_k:                # citim numarul de evolutii
     pushl $k
-    pushl $formatScanf
+    pushl $formatNrScanf
     call scanf
     popl %edx
     popl %edx
