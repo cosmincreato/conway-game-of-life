@@ -2,8 +2,10 @@
     formatScanf: .asciz "%d"
     formatFprintf: .asciz "%d "
     newLine: .asciz "\n"
-    fileFormat: .asciz "w"
-    fileName: .asciz "out.txt"
+    inFileName: .asciz "in.txt"
+    outFileName: .asciz "out.txt"
+    inFileFormat: .asciz "r"
+    outFileFormat: .asciz "w"
     filePointer: .space 4
 
     m: .space 4
@@ -35,23 +37,36 @@
 
 main:           # citim nr linii, col si celule vii
 
+    pushl $inFileFormat
+    pushl $inFileName
+    call fopen
+    movl %eax, filePointer
+    popl %edx
+    popl %edx
+
     pushl $m
     pushl $formatScanf
-    call scanf
+    pushl filePointer
+    call fscanf
+    popl %edx
     popl %edx
     popl %edx
     addl $2, m  # pentru bordarea matricei, liniile 0 si m vor fi bordate si nefolosite
 
     pushl $n
     pushl $formatScanf
-    call scanf
+    pushl filePointer
+    call fscanf
+    popl %edx
     popl %edx
     popl %edx
     addl $2, n  # pentru bordarea matricei, coloanele 0 si n vor fi bordate si nefolosite
 
     pushl $p
     pushl $formatScanf
-    call scanf
+    pushl filePointer
+    call fscanf
+    popl %edx
     popl %edx
     popl %edx
 
@@ -73,13 +88,17 @@ et_citire_celule:   # citim cele p celule vii
 
     pushl $pozX
     pushl $formatScanf
-    call scanf
+    pushl filePointer
+    call fscanf
+    popl %edx
     popl %edx
     popl %edx
 
     pushl $pozY
     pushl $formatScanf
-    call scanf
+    pushl filePointer
+    call fscanf
+    popl %edx
     popl %edx
     popl %edx
 
@@ -101,7 +120,9 @@ et_citire_celule:   # citim cele p celule vii
 et_citire_k:                # citim numarul de evolutii
     pushl $k
     pushl $formatScanf
-    call scanf
+    pushl filePointer
+    call fscanf
+    popl %edx
     popl %edx
     popl %edx
 
@@ -339,8 +360,8 @@ et_afisare_mat:
 
     movl $1, indexLinie
 
-    pushl $fileFormat
-    pushl $fileName
+    pushl $outFileFormat
+    pushl $outFileName
     call fopen
     movl %eax, filePointer
     popl %edx
