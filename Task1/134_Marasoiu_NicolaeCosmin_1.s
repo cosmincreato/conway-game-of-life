@@ -1,5 +1,6 @@
 .data
-    formatScanf: .asciz "%d"
+    formatNrScanf: .asciz "%d"
+    formatPairScanf: .asciz "%d %d"
     formatStringScanf: .asciz "%s"
 
     formatPrintf: .asciz "%d"
@@ -38,21 +39,21 @@
 main:           # citim nr linii, col si celule vii
 
     pushl $m
-    pushl $formatScanf
+    pushl $formatNrScanf
     call scanf
     popl %edx
     popl %edx
     addl $2, m  # pentru bordarea matricei, liniile 0 si m vor fi bordate si nefolosite
 
     pushl $n
-    pushl $formatScanf
+    pushl $formatNrScanf
     call scanf
     popl %edx
     popl %edx
     addl $2, n  # pentru bordarea matricei, coloanele 0 si n vor fi bordate si nefolosite
 
     pushl $p
-    pushl $formatScanf
+    pushl $formatNrScanf
     call scanf
     popl %edx
     popl %edx
@@ -73,15 +74,11 @@ et_citire_celule:   # citim cele p celule vii
     cmp %ecx, p
     je et_citire
 
-    pushl $pozX
-    pushl $formatScanf
-    call scanf
-    popl %edx
-    popl %edx
-
     pushl $pozY
-    pushl $formatScanf
+    pushl $pozX
+    pushl $formatPairScanf
     call scanf
+    popl %edx
     popl %edx
     popl %edx
 
@@ -102,13 +99,13 @@ et_citire_celule:   # citim cele p celule vii
 
 et_citire:                # citim numarul de evolutii, taskul cerut si mesajul
     pushl $k
-    pushl $formatScanf
+    pushl $formatNrScanf
     call scanf
     popl %edx
     popl %edx
 
     pushl $task
-    pushl $formatScanf
+    pushl $formatNrScanf
     call scanf
     popl %edx
     popl %edx
@@ -357,7 +354,7 @@ et_afisare_cod:
     et_linie:
         movl indexLinie, %ecx
         cmp %ecx, m
-        je et_test
+        je et_afisare_msj
 
         movl $0, indexColoana
         et_coloana:
@@ -391,13 +388,21 @@ et_afisare_cod:
         incl indexLinie
         jmp et_linie
 
-et_test:
+et_afisare_msj:
+    movl $4, %eax
+    movl $1, %ebx
+    movl $newLine, %ecx
+    movl $2, %edx
+    int $0x80
 
-    pushl $mesaj
-    pushl $formatStringPrintf
+    leal mesaj, %edi
+
+    pushl %edi
+    pushl $formatPrintf
     call printf
     popl %edx
     popl %edx
+
 
     pushl $0
     call fflush
