@@ -31,6 +31,9 @@
     nrVecini: .space 4
 
     valoareCurenta: .space 4
+    indexMesaj: .space 4
+    lungimeMesaj: .space 4
+
 
 .text
 
@@ -354,7 +357,7 @@ et_afisare_cod:
     et_linie:
         movl indexLinie, %ecx
         cmp %ecx, m
-        je et_afisare_msj
+        je et_afisare_mesaj
 
         movl $0, indexColoana
         et_coloana:
@@ -388,34 +391,68 @@ et_afisare_cod:
         incl indexLinie
         jmp et_linie
 
-et_afisare_msj:
-    movl $4, %eax
-    movl $1, %ebx
-    movl $newLine, %ecx
-    movl $2, %edx
-    int $0x80
-
-    leal mesaj, %edi
-
-    pushl %edi
-    pushl $formatPrintf
+/*
+parcurgem cuvantul litera cu litera
+parcurgem litera bit cu bit (o sa fie 8 biti mereu)
+punem fiecare bit parcurs in parola
+*/
+et_afisare_mesaj:
+    pushl $newLine
     call printf
     popl %edx
-    popl %edx
-
 
     pushl $0
     call fflush
     popl %edx
 
+    movl $0, %eax
+    lea mesaj, %edi
+
+    et_lungime_mesaj:
+        cmpb $0, (%edi)
+        je et_end_lungime_mesaj
+        incl %eax
+        inc %edi
+        jmp et_lungime_mesaj
+
+    et_end_lungime_mesaj:
+        movl %eax, lungimeMesaj
+        movl $0, indexMesaj
+
+    et_parcurgere_mesaj:
+        movl indexMesaj, %eax
+        lea mesaj, %edi
+        movl $0, %ebx
+        movb (%edi, %eax, 1), %bl
+
+        pushl %ebx
+        pushl $formatPrintf
+        call printf
+        popl %edx
+        popl %edx
+
+        pushl $0
+        call fflush
+        popl %edx
+
+        pushl $newLine
+        call printf
+        popl %edx
+
+        pushl $0
+        call fflush
+        popl %edx
+
+        incl indexMesaj
+        movl indexMesaj, %eax
+        cmpl lungimeMesaj, %eax
+        je et_exit
+
+        jmp et_parcurgere_mesaj
+
     jmp et_exit
 
 et_exit:
-    movl $4, %eax
-    movl $1, %ebx
-    movl $newLine, %ecx
-    movl $2, %edx
-    int $0x80
 
     movl $1, %eax
     xorl %ebx, %ebx
