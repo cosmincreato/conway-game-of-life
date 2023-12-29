@@ -31,8 +31,14 @@
     nrVecini: .space 4
 
     valoareCurenta: .space 4
+
+    indexBit: .space 4
+    indexParcurgereCheie: .space 4
+
     indexMesaj: .space 4
     lungimeMesaj: .space 4
+
+    cheie: .space 1600
 
 
 .text
@@ -418,12 +424,61 @@ et_afisare_mesaj:
     et_end_lungime_mesaj:
         movl %eax, lungimeMesaj
         movl $0, indexMesaj
+        movl $0, indexParcurgereCheie
 
     et_parcurgere_mesaj:
         movl indexMesaj, %eax
+
         lea mesaj, %edi
         movl $0, %ebx
-        movb (%edi, %eax, 1), %bl
+        movb (%edi, %eax, 1), %bl # vom pune in ebx valoarea ascii a fiecarei litere din mesaj
+
+        movl $0, indexBit
+
+        et_parcurgere_litera:   # vom parcurge fiecare bit din ebx (8 biti, fiind totul in bl) pentru a-l memora
+            movl %ebx, %ecx # vom muta numarul in ecx pentru a-l putea shifta fara sa pierdem valoarea
+            andl $1, %ecx # in ecx va ramane doar lsb, pe care il vom pune in cheie
+            # problema este ca folosind acest algoritm, cheia va fi in ordine inversa
+            # putem rezolva asta folosind o formula, astfel gasim ca pozitia bitului in cheie este 8 * (indexMesaj+1) - indexBit - 1
+
+            lea cheie, %edi
+            movl indexMesaj, %eax
+            incl %eax
+            movl $8, %edx
+            mull %edx
+            decl %eax
+            subl indexBit, %eax
+
+            movl %ecx, (%edi, %eax, 4)
+
+            incl indexBit
+            incl indexParcurgereCheie
+            shrl $1, %ebx
+            movl indexBit, %eax
+            cmpl $8, %eax
+            je et_continuare_parcurgere_mesaj
+
+            jmp et_parcurgere_litera
+
+    et_continuare_parcurgere_mesaj:
+
+        incl indexMesaj
+        movl indexMesaj, %eax
+        cmpl lungimeMesaj, %eax
+        je et_afisare_cheie
+
+        jmp et_parcurgere_mesaj
+
+et_afisare_cheie:
+
+    lea cheie, %edi
+    movl indexParcurgereCheie, %eax
+    movl %eax, lungimeMesaj
+    movl $0, indexParcurgereCheie
+
+    et_parcurgere_lgMesaj:
+        movl indexParcurgereCheie, %eax
+        movl (%edi, %eax, 4), %ebx
 
         pushl %ebx
         pushl $formatPrintf
@@ -435,22 +490,11 @@ et_afisare_mesaj:
         call fflush
         popl %edx
 
-        pushl $newLine
-        call printf
-        popl %edx
-
-        pushl $0
-        call fflush
-        popl %edx
-
-        incl indexMesaj
-        movl indexMesaj, %eax
+        incl indexParcurgereCheie
+        movl indexParcurgereCheie, %eax
         cmpl lungimeMesaj, %eax
         je et_exit
-
-        jmp et_parcurgere_mesaj
-
-    jmp et_exit
+        jmp et_parcurgere_lgMesaj
 
 et_exit:
 
