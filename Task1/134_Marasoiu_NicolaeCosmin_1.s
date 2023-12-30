@@ -5,6 +5,8 @@
 
     formatPrintf: .asciz "%d"
     formatStringPrintf: .asciz "%s"
+    formatHexaPrintf: .asciz "%X"
+    prefixHexa: .asciz "0x"
     newLine: .asciz "\n"
 
     m: .space 4
@@ -45,6 +47,9 @@
     limita: .space 4
 
     cript: .space 1600
+
+    criptHexa: .space 1600
+    lungimeCriptHexa: .space 4
 
 .text
 
@@ -584,11 +589,10 @@ et_xorare:
         incl indexParcurgereXor
         movl indexParcurgereXor, %eax
         cmpl lungimeMesaj, %eax
-        je et_exit
+        je et_transformHexa
         jmp et_for_xor
 
-et_exit:
-
+et_transformHexa:
     pushl $newLine
     call printf
     popl %edx
@@ -596,6 +600,79 @@ et_exit:
     call fflush
     popl %edx
 
+    movl lungimeMesaj, %eax
+    decl %eax
+    movl %eax, indexParcurgereXor
+    movl $0, indexMesaj
+    et_for_transformHexa:
+        lea cript, %edi
+        movl indexParcurgereXor, %eax
+        movl (%edi, %eax, 4), %ebx
+
+        decl indexParcurgereXor
+        movl indexParcurgereXor, %eax
+        movl (%edi, %eax, 4), %ecx
+        shll $1, %ecx
+        orl %ecx, %ebx
+
+        decl indexParcurgereXor
+        movl indexParcurgereXor, %eax
+        movl (%edi, %eax, 4), %ecx
+        shll $2, %ecx
+        orl %ecx, %ebx
+
+        decl indexParcurgereXor
+        movl indexParcurgereXor, %eax
+        movl (%edi, %eax, 4), %ecx
+        shll $3, %ecx
+        orl %ecx, %ebx
+
+        # acum avem numerele corecte, dar, din nou, le luam in ordine inversa pentru ca vrem ca numarul in hexa sa fie transformat corect
+        lea criptHexa, %edi
+        movl indexMesaj, %eax
+        movl %ebx, (%edi, %eax, 4)
+
+        incl indexMesaj
+        decl indexParcurgereXor
+        movl indexParcurgereXor, %eax
+        cmpl $0, %eax
+        jl et_afisare_finala
+        jmp et_for_transformHexa
+
+et_afisare_finala:
+    movl indexMesaj, %eax
+    movl %eax, lungimeCriptHexa
+    decl indexMesaj
+
+    pushl $prefixHexa
+    call printf
+    popl %edx
+    pushl $0
+    call fflush
+    popl %edx
+
+    et_for_afisareHexa:
+
+        lea criptHexa, %edi
+        movl indexMesaj, %eax
+        movl (%edi, %eax, 4), %ebx
+
+        pushl %ebx
+        pushl $formatHexaPrintf
+        call printf
+        popl %edx
+        popl %edx
+        pushl $0
+        call fflush
+        popl %edx
+
+        decl indexMesaj
+        movl indexMesaj, %eax
+        cmpl $0, %eax
+        jl et_exit
+        jmp et_for_afisareHexa
+
+et_exit:
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80
