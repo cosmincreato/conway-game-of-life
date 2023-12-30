@@ -44,6 +44,8 @@
     indexParcurgereXor: .space 4
     limita: .space 4
 
+    cript: .space 1600
+
 .text
 
 .global main
@@ -566,7 +568,12 @@ et_xorare:
         movl (%edi, %eax, 4), %ecx
         xorl %ecx, %ebx
 
-        pushl %ebx
+        movl %ebx, valoareCurenta
+        lea cript, %edi
+        movl indexParcurgereXor, %eax
+        movl valoareCurenta, (%edi, %eax, 4)
+
+        pushl valoareCurenta
         pushl $formatPrintf
         call printf
         popl %edx
