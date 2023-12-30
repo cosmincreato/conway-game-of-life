@@ -568,12 +568,11 @@ et_xorare:
         movl (%edi, %eax, 4), %ecx
         xorl %ecx, %ebx
 
-        movl %ebx, valoareCurenta
         lea cript, %edi
         movl indexParcurgereXor, %eax
-        movl valoareCurenta, (%edi, %eax, 4)
+        movl %ebx, (%edi, %eax, 4)
 
-        pushl valoareCurenta
+        pushl %ebx
         pushl $formatPrintf
         call printf
         popl %edx
