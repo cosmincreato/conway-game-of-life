@@ -441,12 +441,11 @@ et_corectare_siruri:
     mull %edx
     movl %eax, lungimeMesaj     # lungimea sirului dat de mesaj (fiecare litera are cate 8 bytes)
 
-    # acum vrem sa vedem care lungime este mai mica pentru a completa matricea cu elemente pana lungimile sunt egale
+    # acum vrem sa vedem daca lungimea matricei este mai mica pentru a o creste
 
     cmpl lungimeMatrice, %eax
     jg et_crestere_matrice
-    jl et_crestere_mesaj
-    jmp et_afisare
+    jmp et_xorare
 
 et_crestere_matrice:    # vrem sa crestem vectorul "matrice" pana cand va avea aceeasi lungime ca si vectorul "cheie"
     
@@ -470,98 +469,11 @@ et_crestere_matrice:    # vrem sa crestem vectorul "matrice" pana cand va avea a
         incl indexParcurgereMatrice
         movl indexParcurgereMatrice, %eax
         cmpl limita, %eax
-        je et_afisare
+        je et_xorare
         jmp et_for_loop
 
-et_crestere_mesaj:   # vrem sa crestem vectorul "cheie" pana cand va avea aceeasi lungime ca si vectorul "matrice"
-    movl lungimeMatrice, %eax
-    subl lungimeMesaj, %eax 
-    movl %eax, limita   # cu cat vrem sa crestem vectorul "cheie"
-    movl $0, indexParcurgereCheie
-
-    et_for_loop_msj:        # va trebui sa completam elementele v[lungimeCheie] cu valorea din v[indexParcurgereCheie]
-        lea cheie, %edi
-        movl indexParcurgereCheie, %ebx
-        movl (%edi, %ebx, 4), %eax  # valoarea pe care vrem sa o punem
-        movl %eax, valoareCurenta
-
-        movl lungimeMesaj, %ecx  # pozitia unde vrem sa punem valorea
-
-        movl valoareCurenta, %eax
-        movl %eax, (%edi, %ecx, 4)
-        incl lungimeMesaj
-
-        incl indexParcurgereCheie
-        movl indexParcurgereCheie, %eax
-        cmpl limita, %eax
-        je et_afisare
-        jmp et_for_loop_msj
-
-
-et_afisare:
-
-    movl $0, indexParcurgereMatrice
-    et_for_matrice:
-        lea matrice, %edi
-        movl indexParcurgereMatrice, %eax
-        movl (%edi, %eax, 4), %ebx
-
-        pushl %ebx
-        pushl $formatPrintf
-        call printf
-        popl %edx
-        popl %edx
-
-        pushl $0
-        call fflush
-        popl %edx
-
-        incl indexParcurgereMatrice
-        movl indexParcurgereMatrice, %eax
-        cmpl lungimeMatrice, %eax
-        je next_step
-        jmp et_for_matrice
-    next_step:
-        movl $0, indexParcurgereCheie
-
-        pushl $newLine
-        call printf
-        popl %edx
-
-        pushl $0
-        call fflush
-        popl %edx
-
-        jmp et_for_cheie
-    et_for_cheie:
-        lea cheie, %edi
-        movl indexParcurgereCheie, %eax
-        movl (%edi, %eax, 4), %ebx
-
-        pushl %ebx
-        pushl $formatPrintf
-        call printf
-        popl %edx
-        popl %edx
-
-        pushl $0
-        call fflush
-        popl %edx
-
-        incl indexParcurgereCheie
-        movl indexParcurgereCheie, %eax
-        cmpl lungimeMesaj, %eax
-        je et_xorare
-        jmp et_for_cheie
 
 et_xorare:
-    pushl $newLine
-    call printf
-    popl %edx
-    pushl $0
-    call fflush
-    popl %edx
-
     movl $0, indexParcurgereXor
     et_for_xor:
 
@@ -577,15 +489,6 @@ et_xorare:
         movl indexParcurgereXor, %eax
         movl %ebx, (%edi, %eax, 4)
 
-        pushl %ebx
-        pushl $formatPrintf
-        call printf
-        popl %edx
-        popl %edx
-        pushl $0
-        call fflush
-        popl %edx
-
         incl indexParcurgereXor
         movl indexParcurgereXor, %eax
         cmpl lungimeMesaj, %eax
@@ -593,12 +496,6 @@ et_xorare:
         jmp et_for_xor
 
 et_transformHexa:
-    pushl $newLine
-    call printf
-    popl %edx
-    pushl $0
-    call fflush
-    popl %edx
 
     movl lungimeMesaj, %eax
     decl %eax
@@ -673,6 +570,14 @@ et_afisare_finala:
         jmp et_for_afisareHexa
 
 et_exit:
+
+    pushl $newLine
+    call printf
+    popl %edx
+    pushl $0
+    call fflush
+    popl %edx
+
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80
