@@ -577,10 +577,6 @@ et_exit:
     call fflush
     popl %edx
 
-    pushl $0
-    call fflush
-    popl %edx
-
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80

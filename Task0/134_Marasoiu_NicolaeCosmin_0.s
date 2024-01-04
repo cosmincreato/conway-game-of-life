@@ -378,6 +378,7 @@ et_afisare_mat:
         jmp et_linie
 
 et_exit:
+
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80
