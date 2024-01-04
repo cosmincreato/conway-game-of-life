@@ -441,11 +441,10 @@ et_corectare_siruri:
     mull %edx
     movl %eax, lungimeMesaj     # lungimea sirului dat de mesaj (fiecare litera are cate 8 bytes)
 
-    # acum vrem sa vedem daca lungimea matricei este mai mica pentru a o creste
-
-    cmpl lungimeMatrice, %eax
-    jg et_crestere_matrice
-    jmp et_xorare
+    et_comparatie:              # acum vrem sa vedem daca lungimea matricei este mai mica pentru a o creste
+        cmpl lungimeMatrice, %eax
+        jg et_crestere_matrice
+        jmp et_xorare
 
 et_crestere_matrice:    # vrem sa crestem vectorul "matrice" pana cand va avea aceeasi lungime ca si vectorul "cheie"
     
@@ -469,7 +468,7 @@ et_crestere_matrice:    # vrem sa crestem vectorul "matrice" pana cand va avea a
         incl indexParcurgereMatrice
         movl indexParcurgereMatrice, %eax
         cmpl limita, %eax
-        je et_xorare
+        je et_comparatie
         jmp et_for_loop
 
 
@@ -574,6 +573,10 @@ et_exit:
     pushl $newLine
     call printf
     popl %edx
+    pushl $0
+    call fflush
+    popl %edx
+
     pushl $0
     call fflush
     popl %edx
