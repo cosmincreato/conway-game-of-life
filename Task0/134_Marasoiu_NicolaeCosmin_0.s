@@ -12,17 +12,14 @@
     mVerif: .space 4
     nVerif: .space 4
 
-    indexP: .space 4
+    index: .space 4
+    indexLinie: .space 4
+    indexColoana: .space 4
     pozX: .space 4
     pozY: .space 4
 
-    indexLinie: .space 4
-    indexColoana: .space 4
-
     matrice: .space 1600
     matriceNoua: .space 1600
-
-    indexK: .space 4
     nrVecini: .space 4
 
     valoareCurenta: .space 4
@@ -31,21 +28,19 @@
 
 .global main
 
-main:           # citim nr linii, col si celule vii
-
+main:
     pushl $m
     pushl $formatNrScanf
     call scanf
     popl %edx
     popl %edx
-    addl $2, m  # pentru bordarea matricei, liniile 0 si m vor fi bordate si nefolosite
+
 
     pushl $n
     pushl $formatNrScanf
     call scanf
     popl %edx
     popl %edx
-    addl $2, n  # pentru bordarea matricei, coloanele 0 si n vor fi bordate si nefolosite
 
     pushl $p
     pushl $formatNrScanf
@@ -53,7 +48,11 @@ main:           # citim nr linii, col si celule vii
     popl %edx
     popl %edx
 
-    # in mVerif si nVerif vom salva valoarea pana la care parcurgem matricea in verificari si afisari
+    # Bordare
+    addl $2, m 
+    addl $2, n
+
+    # Valoarea pana la care parcurgem matricea in verificari si afisari
     movl m, %ecx
     decl %ecx
     movl %ecx, mVerif
@@ -62,12 +61,13 @@ main:           # citim nr linii, col si celule vii
     decl %ecx
     movl %ecx, nVerif
 
-    movl $0, indexP
 
-et_citire_celule:   # citim cele p celule vii
-    movl indexP, %ecx
+    movl $0, index
+
+et_citire_celule:
+    movl index, %ecx
     cmp %ecx, p
-    je et_citire_k
+    je et_citire_nr_evo
 
     pushl $pozY
     pushl $pozX
@@ -77,8 +77,8 @@ et_citire_celule:   # citim cele p celule vii
     popl %edx
     popl %edx
 
-    # trebuie sa plasam valoarea v[pozX][pozY] in vectorul matrice, ( pozX * n + pozY )
-    # consideram matricea bordata, astfel (pozX, pozY) va fi (pozX + 1, pozY + 1) (liniile 0 si m vor fi bordura, coloanele 0 si n vor fi bordura)
+    # Trebuie sa plasam valoarea v[pozX][pozY] in vectorul matrice, ( pozX * n + pozY )
+    # Consideram matricea bordata, astfel (pozX, pozY) va fi (pozX + 1, pozY + 1) (liniile 0 si m vor fi bordura, coloanele 0 si n vor fi bordura)
     movl pozX, %eax
     incl %eax
     movl $0, %edx
@@ -89,24 +89,23 @@ et_citire_celule:   # citim cele p celule vii
     lea matrice, %edi
     movl $1, (%edi, %eax, 4)
 
-    incl indexP
+    incl index
     jmp et_citire_celule
 
-et_citire_k:                # citim numarul de evolutii
+et_citire_nr_evo:                # Citim numarul de evolutii
     pushl $k
     pushl $formatNrScanf
     call scanf
     popl %edx
     popl %edx
 
-    movl $0, indexK
+    movl $0, index
 
 et_evolutie:                # un loop in care executam cele k evolutii
-    movl indexK, %ecx
+    movl index, %ecx
     cmp %ecx, k
     je et_afisare_mat       # cand toate cele k evolutii au avut loc, afisam matricea finala
-
-    incl indexK
+    incl index
         
     movl $1, indexLinie     # resetam indexul matricei pentru a o reparcurge
 
@@ -235,7 +234,6 @@ et_evolutie:                # un loop in care executam cele k evolutii
         jmp et_linie_evo
 
 et_celula_moarta:
-
     # vom verifica daca celula moarta are exact 3 vecini vii
     movl nrVecini, %eax
     cmp $3, %eax
@@ -254,8 +252,7 @@ et_celula_moarta:
     jmp et_coloana_urmatoare_evo    # ne intoarcem in loop-ul principal, unde vom trece la urmatoarea coloana
 
 
-et_celula_vie:
-    
+et_celula_vie:    
     # vom verifica daca celula vie are 2 sau 3 vecini vii
     movl nrVecini, %eax
     cmp $2, %eax
@@ -278,9 +275,7 @@ et_celula_vie:
     jmp et_coloana_urmatoare_evo    # ne intoarcem in loop-ul principal, unde vom trece la urmatoarea coloana
 
 et_creare_celula:
-
     # vom pune 1 in matriceNoua
-
     movl indexLinie, %eax
     movl $0, %edx
     mull n
@@ -292,7 +287,6 @@ et_creare_celula:
     jmp et_coloana_urmatoare_evo    # ne intoarcem in loop-ul principal, unde vom trece la urmatoarea coloana
 
 et_interschimbare_matrice:
-
     # vom pune matricea noua in matricea pe care o verificam pentru urmatorul pas
    movl $1, indexLinie
     et_linie_inter:
@@ -322,15 +316,12 @@ et_interschimbare_matrice:
             jmp et_coloana_inter
 
     et_next_inter:
-
         incl indexLinie
         jmp et_linie_inter
-
 
     jmp et_evolutie
 
 et_afisare_mat:
-
     movl $1, indexLinie
 
     et_linie:
@@ -362,23 +353,21 @@ et_afisare_mat:
             call fflush
             popl %edx
 
-
             incl indexColoana
             jmp et_coloana
 
     et_next:
-        
-        movl $4, %eax
-        movl $1, %ebx
-        movl $newLine, %ecx
-        movl $2, %edx
-        int $0x80
+        pushl $newLine
+        call printf
+        popl %edx
+        pushl $0
+        call fflush
+        popl %edx
 
         incl indexLinie
         jmp et_linie
 
 et_exit:
-
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80

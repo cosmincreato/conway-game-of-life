@@ -17,7 +17,7 @@
     mVerif: .space 4
     nVerif: .space 4
 
-    indexP: .space 4
+    index: .space 4
     pozX: .space 4
     pozY: .space 4
 
@@ -27,7 +27,6 @@
     matrice: .space 1600
     matriceNoua: .space 1600
 
-    indexK: .space 4
     nrVecini: .space 4
 
     valoareCurenta: .space 4
@@ -36,8 +35,7 @@
 
 .global main
 
-main:           # citim nr linii, col si celule vii
-
+main:
     pushl $inFileFormat
     pushl $inFileName
     call fopen
@@ -52,7 +50,6 @@ main:           # citim nr linii, col si celule vii
     popl %edx
     popl %edx
     popl %edx
-    addl $2, m  # pentru bordarea matricei, liniile 0 si m vor fi bordate si nefolosite
 
     pushl $n
     pushl $formatNrScanf
@@ -61,7 +58,6 @@ main:           # citim nr linii, col si celule vii
     popl %edx
     popl %edx
     popl %edx
-    addl $2, n  # pentru bordarea matricei, coloanele 0 si n vor fi bordate si nefolosite
 
     pushl $p
     pushl $formatNrScanf
@@ -71,7 +67,11 @@ main:           # citim nr linii, col si celule vii
     popl %edx
     popl %edx
 
-    # in mVerif si nVerif vom salva valoarea pana la care parcurgem matricea in verificari si afisari
+    # Bordare
+    addl $2, m 
+    addl $2, n
+
+    # Valoarea pana la care parcurgem matricea in verificari si afisari
     movl m, %ecx
     decl %ecx
     movl %ecx, mVerif
@@ -80,10 +80,10 @@ main:           # citim nr linii, col si celule vii
     decl %ecx
     movl %ecx, nVerif
 
-    movl $0, indexP
+    movl $0, index
 
 et_citire_celule:   # citim cele p celule vii
-    movl indexP, %ecx
+    movl index, %ecx
     cmp %ecx, p
     je et_citire_k
 
@@ -109,7 +109,7 @@ et_citire_celule:   # citim cele p celule vii
     lea matrice, %edi
     movl $1, (%edi, %eax, 4)
 
-    incl indexP
+    incl index
     jmp et_citire_celule
 
 et_citire_k:                # citim numarul de evolutii
@@ -121,14 +121,14 @@ et_citire_k:                # citim numarul de evolutii
     popl %edx
     popl %edx
 
-    movl $0, indexK
+    movl $0, index
 
 et_evolutie:                # un loop in care executam cele k evolutii
-    movl indexK, %ecx
+    movl index, %ecx
     cmp %ecx, k
     je et_afisare_mat       # cand toate cele k evolutii au avut loc, afisam matricea finala
 
-    incl indexK
+    incl index
         
     movl $1, indexLinie     # resetam indexul matricei pentru a o reparcurge
 
@@ -398,7 +398,7 @@ et_afisare_mat:
         pushl filePointer
         call fprintf
         popl %edx
-        popl %edx  
+        popl %edx
 
         incl indexLinie
         jmp et_linie

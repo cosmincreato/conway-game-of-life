@@ -19,7 +19,7 @@
     mVerif: .space 4
     nVerif: .space 4
 
-    indexP: .space 4
+    index: .space 4
     pozX: .space 4
     pozY: .space 4
 
@@ -29,8 +29,6 @@
     matrice: .space 1600
     matriceNoua: .space 1600
     lungimeMatrice: .space 4
-
-    indexK: .space 4
     nrVecini: .space 4
 
     valoareCurenta: .space 4
@@ -40,10 +38,6 @@
     lungimeMesaj: .space 4
 
     indexBit: .space 4
-
-    indexParcurgereCheie: .space 4
-    indexParcurgereMatrice: .space 4
-    indexParcurgereXor: .space 4
     limita: .space 4
 
     cript: .space 1600
@@ -55,21 +49,19 @@
 
 .global main
 
-main:           # citim nr linii, col si celule vii
-
+main:
     pushl $m
     pushl $formatNrScanf
     call scanf
     popl %edx
     popl %edx
-    addl $2, m  # pentru bordarea matricei, liniile 0 si m vor fi bordate si nefolosite
+
 
     pushl $n
     pushl $formatNrScanf
     call scanf
     popl %edx
     popl %edx
-    addl $2, n  # pentru bordarea matricei, coloanele 0 si n vor fi bordate si nefolosite
 
     pushl $p
     pushl $formatNrScanf
@@ -77,7 +69,11 @@ main:           # citim nr linii, col si celule vii
     popl %edx
     popl %edx
 
-    # in mVerif si nVerif vom salva valoarea pana la care parcurgem matricea in verificari si afisari
+    # Bordare
+    addl $2, m 
+    addl $2, n
+
+    # Valoarea pana la care parcurgem matricea in verificari si afisari
     movl m, %ecx
     decl %ecx
     movl %ecx, mVerif
@@ -86,10 +82,10 @@ main:           # citim nr linii, col si celule vii
     decl %ecx
     movl %ecx, nVerif
 
-    movl $0, indexP
+    movl $0, index
 
 et_citire_celule:   # citim cele p celule vii
-    movl indexP, %ecx
+    movl index, %ecx
     cmp %ecx, p
     je et_citire
 
@@ -113,7 +109,7 @@ et_citire_celule:   # citim cele p celule vii
     lea matrice, %edi
     movl $1, (%edi, %eax, 4)
 
-    incl indexP
+    incl index
     jmp et_citire_celule
 
 et_citire:                # citim numarul de evolutii, taskul cerut si mesajul
@@ -135,14 +131,14 @@ et_citire:                # citim numarul de evolutii, taskul cerut si mesajul
     popl %edx
     popl %edx
 
-    movl $0, indexK
+    movl $0, index
 
 et_evolutie:                # un loop in care executam cele k evolutii
-    movl indexK, %ecx
+    movl index, %ecx
     cmp %ecx, k
     je et_creare_mesaj      # cand toate cele k evolutii au avut loc, afisam matricea finala
 
-    incl indexK
+    incl index
         
     movl $1, indexLinie     # resetam indexul matricei pentru a o reparcurge
 
@@ -384,7 +380,7 @@ et_creare_mesaj:
     et_end_lungime_mesaj:
         movl %eax, lungimeMesaj
         movl $0, indexMesaj
-        movl $0, indexParcurgereCheie
+        movl $0, index
 
     et_parcurgere_mesaj:
         movl indexMesaj, %eax
@@ -413,7 +409,7 @@ et_creare_mesaj:
             # aceeasi structura si ii putem xora mai usor
 
             incl indexBit
-            incl indexParcurgereCheie
+            incl index
             shrl $1, %ebx
             movl indexBit, %eax
             cmpl $8, %eax
@@ -451,11 +447,11 @@ et_crestere_matrice:    # vrem sa crestem vectorul "matrice" pana cand va avea a
     movl lungimeMesaj, %eax
     subl lungimeMatrice, %eax 
     movl %eax, limita   # cu cat vrem sa crestem vectorul "matrice"
-    movl $0, indexParcurgereMatrice
+    movl $0, index
 
     et_for_loop:        # va trebui sa completam elementele v[lungimeMatrice] cu valorea din v[indexParcurgereMatrice]
         lea matrice, %edi
-        movl indexParcurgereMatrice, %ebx
+        movl index, %ebx
         movl (%edi, %ebx, 4), %eax  # valoarea pe care vrem sa o punem
         movl %eax, valoareCurenta
 
@@ -465,31 +461,31 @@ et_crestere_matrice:    # vrem sa crestem vectorul "matrice" pana cand va avea a
         movl %eax, (%edi, %ecx, 4)
         incl lungimeMatrice
 
-        incl indexParcurgereMatrice
-        movl indexParcurgereMatrice, %eax
+        incl index
+        movl index, %eax
         cmpl limita, %eax
         je et_comparatie
         jmp et_for_loop
 
 
 et_xorare:
-    movl $0, indexParcurgereXor
+    movl $0, index
     et_for_xor:
 
         lea matrice, %edi
-        movl indexParcurgereXor, %eax
+        movl index, %eax
         movl (%edi, %eax, 4), %ebx
         lea cheie, %edi
-        movl indexParcurgereXor, %eax
+        movl index, %eax
         movl (%edi, %eax, 4), %ecx
         xorl %ecx, %ebx
 
         lea cript, %edi
-        movl indexParcurgereXor, %eax
+        movl index, %eax
         movl %ebx, (%edi, %eax, 4)
 
-        incl indexParcurgereXor
-        movl indexParcurgereXor, %eax
+        incl index
+        movl index, %eax
         cmpl lungimeMesaj, %eax
         je et_transformHexa
         jmp et_for_xor
@@ -498,27 +494,27 @@ et_transformHexa:
 
     movl lungimeMesaj, %eax
     decl %eax
-    movl %eax, indexParcurgereXor
+    movl %eax, index
     movl $0, indexMesaj
     et_for_transformHexa:
         lea cript, %edi
-        movl indexParcurgereXor, %eax
+        movl index, %eax
         movl (%edi, %eax, 4), %ebx
 
-        decl indexParcurgereXor
-        movl indexParcurgereXor, %eax
+        decl index
+        movl index, %eax
         movl (%edi, %eax, 4), %ecx
         shll $1, %ecx
         orl %ecx, %ebx
 
-        decl indexParcurgereXor
-        movl indexParcurgereXor, %eax
+        decl index
+        movl index, %eax
         movl (%edi, %eax, 4), %ecx
         shll $2, %ecx
         orl %ecx, %ebx
 
-        decl indexParcurgereXor
-        movl indexParcurgereXor, %eax
+        decl index
+        movl index, %eax
         movl (%edi, %eax, 4), %ecx
         shll $3, %ecx
         orl %ecx, %ebx
@@ -529,8 +525,8 @@ et_transformHexa:
         movl %ebx, (%edi, %eax, 4)
 
         incl indexMesaj
-        decl indexParcurgereXor
-        movl indexParcurgereXor, %eax
+        decl index
+        movl index, %eax
         cmpl $0, %eax
         jl et_afisare_finala
         jmp et_for_transformHexa
