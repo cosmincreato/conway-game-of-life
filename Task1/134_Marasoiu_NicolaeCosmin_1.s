@@ -3,6 +3,7 @@
     formatPairScanf: .asciz "%d %d"
     formatStringScanf: .asciz "%s"
 
+    formatCharacterPrint: .asciz "%c"
     formatPrintf: .asciz "%d"
     formatStringPrintf: .asciz "%s"
     formatHexaPrintf: .asciz "%X"
@@ -44,6 +45,8 @@
 
     criptHexa: .space 1600
     lungimeCriptHexa: .space 4
+
+    cifraDecript: .space 4
 
 .text
 
@@ -136,7 +139,7 @@ et_citire:                # citim numarul de evolutii, taskul cerut si mesajul
 et_evolutie:                # un loop in care executam cele k evolutii
     movl index, %ecx
     cmp %ecx, k
-    je et_creare_mesaj      # cand toate cele k evolutii au avut loc, afisam matricea finala
+    je et_verif_task        # cand toate cele k evolutii au avut loc, verificam ce task rezolvam
 
     incl index
         
@@ -361,6 +364,12 @@ et_interschimbare_matrice:
 
     jmp et_evolutie
 
+
+et_verif_task:
+    cmpl $0, task
+    je et_creare_mesaj
+    jmp et_decriptare_mesaj
+
 /*
 parcurgem cuvantul litera cu litera
 parcurgem litera bit cu bit (o sa fie 8 biti mereu)
@@ -425,6 +434,215 @@ et_creare_mesaj:
         je et_corectare_siruri
 
         jmp et_parcurgere_mesaj
+
+et_decriptare_mesaj:
+
+    movl $0, %eax
+    lea mesaj, %edi
+
+    et_lungime_mesajDecript:
+        cmpb $0, (%edi)
+        je et_end_lungime_mesajDecript
+        incl %eax
+        inc %edi
+        jmp et_lungime_mesajDecript
+
+    et_end_lungime_mesajDecript:
+        movl %eax, lungimeMesaj
+        movl $2, indexMesaj # ignoram 0x
+
+    et_parcurgere_mesajDecript:
+        movl indexMesaj, %eax
+
+        lea mesaj, %edi
+        movl $0, %ebx
+        movb (%edi, %eax, 1), %bl # vom pune in ebx valoarea ascii a fiecarei litere din mesaj
+
+        movl $0, indexBit
+        jmp et_verif_cifra # vom verifica carei cifra ii corespunde fiecare ascii posibil
+
+        et_continuare_parcurgere_mesajDecript:
+            movl indexBit, %eax
+            cmpl $4, %eax
+            je et_incrementare
+            
+            # vom parcurge fiecare bit din ebx (4 biti) pentru a-l memora
+            movl %ebx, %ecx # vom muta numarul in ecx pentru a-l putea shifta fara sa pierdem valoarea
+            andl $1, %ecx # in ecx va ramane doar lsb, pe care il vom pune in cheie
+            # problema este ca folosind acest algoritm, cheia va fi in ordine inversa
+            # putem rezolva asta folosind o formula, astfel gasim ca pozitia bitului in cheie este 4 * (indexMesaj-1) - indexBit - 1
+            
+            lea cheie, %edi
+            movl indexMesaj, %eax
+            decl %eax
+            movl $4, %edx
+            mull %edx
+            decl %eax
+            subl indexBit, %eax
+
+            movl %ecx, (%edi, %eax, 4)  # punem fiecare bit intr-un long, astfel vectorii "matrice" si "cheie" vor avea
+            # aceeasi structura si ii putem xora mai usor
+
+            shrl $1, %ebx
+            incl indexBit
+            jmp et_continuare_parcurgere_mesajDecript
+
+
+            et_incrementare:
+
+                incl indexMesaj
+                movl indexMesaj, %eax
+                cmpl lungimeMesaj, %eax
+                je et_corectare_siruriDecript
+
+                jmp et_parcurgere_mesajDecript
+
+
+et_corectare_siruriDecript:
+
+    movl m, %eax
+    mull n
+    movl %eax, lungimeMatrice   # lungimea sirului dat de matricea bordata
+
+    movl lungimeMesaj, %eax
+    subl $2, %eax
+    movl $4, %edx
+    mull %edx
+    movl %eax, lungimeMesaj
+    movl $0, %eax
+    movl %eax, index     # lungimea sirului dat de mesaj (fiecare litera are cate 8 bytes)
+
+    et_comparatieDecript:       # acum vrem sa vedem daca lungimea matricei este mai mica pentru a o creste
+    movl lungimeMesaj, %eax
+        cmpl lungimeMatrice, %eax
+        jg et_crestere_matriceDecript
+        jmp et_xorareDecript
+
+
+et_crestere_matriceDecript:    # vrem sa crestem vectorul "matrice" pana cand va avea aceeasi lungime ca si vectorul "cheie"
+
+    movl lungimeMesaj, %eax
+    subl lungimeMatrice, %eax 
+    movl %eax, limita   # cu cat vrem sa crestem vectorul "matrice"
+    movl $0, index
+
+    et_for_loopDecript:        # va trebui sa completam elementele v[lungimeMatrice] cu valorea din v[indexParcurgereMatrice]
+        lea matrice, %edi
+        movl index, %ebx
+        movl (%edi, %ebx, 4), %eax  # valoarea pe care vrem sa o punem
+        movl %eax, valoareCurenta
+
+        movl lungimeMatrice, %ecx  # pozitia unde vrem sa punem valorea
+
+        movl valoareCurenta, %eax
+        movl %eax, (%edi, %ecx, 4)
+        incl lungimeMatrice
+
+        incl index
+        movl index, %eax
+        cmpl limita, %eax
+        je et_comparatieDecript
+        jmp et_for_loopDecript
+
+et_xorareDecript:
+    movl $0, index
+    et_for_xorDecript:
+
+        lea matrice, %edi
+        movl index, %eax
+        movl (%edi, %eax, 4), %ebx
+        lea cheie, %edi
+        movl index, %eax
+        movl (%edi, %eax, 4), %ecx
+        xorl %ecx, %ebx
+
+        lea cript, %edi
+        movl index, %eax
+        movl %ebx, (%edi, %eax, 4)
+
+        incl index
+        movl index, %eax
+        cmpl lungimeMesaj, %eax
+        je et_transformString
+        jmp et_for_xorDecript
+
+et_transformString:
+    movl $0, %eax
+    movl %eax, indexBit
+    et_for_transformString:
+        lea cript, %edi
+
+        movl indexBit, %eax
+        incl %eax
+        movl $8, %ecx
+        mull %ecx
+        decl %eax
+        movl %eax, index
+        movl (%edi, %eax, 4), %ebx
+
+        decl index
+        movl index, %eax
+        movl (%edi, %eax, 4), %ecx
+        shll $1, %ecx
+        orl %ecx, %ebx
+
+        decl index
+        movl index, %eax
+        movl (%edi, %eax, 4), %ecx
+        shll $2, %ecx
+        orl %ecx, %ebx
+
+        decl index
+        movl index, %eax
+        movl (%edi, %eax, 4), %ecx
+        shll $3, %ecx
+        orl %ecx, %ebx
+
+        decl index
+        movl index, %eax
+        movl (%edi, %eax, 4), %ecx
+        shll $4, %ecx
+        orl %ecx, %ebx
+
+        decl index
+        movl index, %eax
+        movl (%edi, %eax, 4), %ecx
+        shll $5, %ecx
+        orl %ecx, %ebx
+
+        decl index
+        movl index, %eax
+        movl (%edi, %eax, 4), %ecx
+        shll $6, %ecx
+        orl %ecx, %ebx
+
+        decl index
+        movl index, %eax
+        movl (%edi, %eax, 4), %ecx
+        shll $7, %ecx
+        orl %ecx, %ebx
+
+        pushl %ebx
+        pushl $formatCharacterPrint
+        call printf
+        popl %edx
+        popl %edx
+        pushl $0
+        call fflush
+        popl %edx
+
+        incl indexBit
+        movl indexBit, %eax
+        movl $8, %ebx
+        mull %ebx
+
+
+        cmp lungimeMesaj, %eax
+        jge et_exit
+        jmp et_for_transformString
+
+    
+        
 
 et_corectare_siruri:
 
@@ -564,6 +782,121 @@ et_afisare_finala:
         jl et_exit
         jmp et_for_afisareHexa
 
+
+# Verificari pentru subtask 2
+
+et_verif_cifra:
+    cmp $48, %ebx
+    je et_val0
+
+    cmp $49, %ebx
+    je et_val1
+
+    cmp $50, %ebx
+    je et_val2
+
+    cmp $51, %ebx
+    je et_val3
+
+    cmp $52, %ebx
+    je et_val4
+
+    cmp $53, %ebx
+    je et_val5
+
+    cmp $54, %ebx
+    je et_val6
+
+    cmp $55, %ebx
+    je et_val7
+
+    cmp $56, %ebx
+    je et_val8
+
+    cmp $57, %ebx
+    je et_val9
+
+    cmp $65, %ebx
+    je et_valA
+
+    cmp $66, %ebx
+    je et_valB
+
+    cmp $67, %ebx
+    je et_valC
+
+    cmp $68, %ebx
+    je et_valD
+
+    cmp $69, %ebx
+    je et_valE
+
+    jmp et_valF
+
+et_val0:
+    movl $0, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
+et_val1:
+    movl $1, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
+et_val2:
+    movl $2, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
+et_val3:
+    movl $3, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
+et_val4:
+    movl $4, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
+et_val5:
+    movl $5, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
+et_val6:
+    movl $6, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
+et_val7:
+    movl $7, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
+et_val8:
+    movl $8, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
+et_val9:
+    movl $9, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
+et_valA:
+    movl $10, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
+et_valB:
+    movl $11, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
+et_valC:
+    movl $12, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
+et_valD:
+    movl $13, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
+et_valE:
+    movl $14, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
+et_valF:
+    movl $15, %ebx
+    jmp et_continuare_parcurgere_mesajDecript
+
 et_exit:
 
     pushl $newLine
@@ -576,3 +909,4 @@ et_exit:
     movl $1, %eax
     xorl %ebx, %ebx
     int $0x80
+
